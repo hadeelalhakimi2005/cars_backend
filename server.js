@@ -10,33 +10,16 @@ const pool = new Pool({
   }
 });
 
-// إنشاء الجدول وإضافة البيانات تلقائياً عند تشغيل السيرفر
 async function initializeDatabase() {
-  const initQuery = 
-    CREATE TABLE IF NOT EXISTS cars (
-      car_id SERIAL PRIMARY KEY,
-      brand VARCHAR(50),
-      model VARCHAR(50),
-      year INT,
-      plate_number VARCHAR(20),
-      color VARCHAR(30),
-      price_per_day NUMERIC(10, 2),
-      status VARCHAR(20) DEFAULT 'available'
-    );
-
-    DO $$
-    BEGIN
-      IF NOT EXISTS (SELECT 1 FROM cars) THEN
-        INSERT INTO cars (brand, model, year, plate_number, color, price_per_day, status)
-        VALUES 
-        ('Toyota', 'Camry', 2022, '1234-ABC', 'White', 45.00, 'available'),
-        ('Hyundai', 'Elantra', 2021, '5678-XYZ', 'Silver', 35.00, 'available');
-      END IF;
-    END $$;
-  ;
-
   try {
-    await pool.query(initQuery);
+    const createTableQuery = 'CREATE TABLE IF NOT EXISTS cars (car_id SERIAL PRIMARY KEY, brand VARCHAR(50), model VARCHAR(50), year INT, plate_number VARCHAR(20), color VARCHAR(30), price_per_day NUMERIC(10, 2), status VARCHAR(20) DEFAULT \'available\');';
+    await pool.query(createTableQuery);
+
+    const checkCars = await pool.query('SELECT COUNT(*) FROM cars');
+    if (parseInt(checkCars.rows[0].count) === 0) {
+      const insertQuery = 'INSERT INTO cars (brand, model, year, plate_number, color, price_per_day, status) VALUES (\'Toyota\', \'Camry\', 2022, \'1234-ABC\', \'White\', 45.00, \'available\'), (\'Hyundai\', \'Elantra\', 2021, \'5678-XYZ\', \'Silver\', 35.00, \'available\');';
+      await pool.query(insertQuery);
+    }
     console.log('Database initialized successfully: cars table is ready.');
   } catch (err) {
     console.error('Error initializing database:', err);
